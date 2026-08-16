@@ -1,7 +1,3 @@
-// SK 股市每日复盘插件 - Client(浏览器)端源码
-// DSH 动态 Cordis 插件(stkr-3/pkg-26)
-
-module.exports = function clientFactory() {
 return {
   inject: ['timer'],
   apply(ctx) {
@@ -45,13 +41,14 @@ return {
     }
 
     styles.insert(`
-.dsr-ov{--dsr-pk:var(--dsw-alias-brand-primary,#6d28d9);--dsr-up:var(--dsw-alias-state-error-primary,#e03131);--dsr-down:var(--dsw-alias-state-success-primary,#0ca678);--dsr-warn:var(--dsw-alias-state-warn-primary,#d97706);--dsr-blue:#3b82f6;--dsr-bg:var(--dsw-alias-bg-overlay,#ffffff);--dsr-bg1:var(--dsw-alias-bg-layer-1,#f7f8fa);--dsr-bg2:var(--dsw-alias-bg-layer-2,#e9ecf1);--dsr-line:var(--dsw-alias-border-l1,rgba(31,35,41,.1));--dsr-line2:var(--dsw-alias-border-l2,rgba(31,35,41,.18));--dsr-t1:var(--dsw-alias-label-primary,#1f2329);--dsr-t2:var(--dsw-alias-label-secondary,#576070);--dsr-mut:color-mix(in srgb,var(--dsr-t2) 72%,transparent);position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(1180px,calc(100vw - 40px));max-height:calc(100vh - 48px);display:flex;flex-direction:column;border-radius:20px;background:radial-gradient(120% 90% at 100% 0%,color-mix(in srgb,var(--dsr-pk) 11%,transparent),transparent 55%),var(--dsr-bg);color:var(--dsr-t1);border:1px solid color-mix(in srgb,var(--dsr-pk) 32%,var(--dsr-line2));box-shadow:0 32px 90px rgba(0,0,0,.34),0 4px 18px rgba(0,0,0,.18);z-index:9999;font-family:system-ui,-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;overflow:hidden;pointer-events:auto;font-size:13px;line-height:1.55;font-variant-numeric:tabular-nums}
+.dsr-theme{--dsr-pk:var(--dsw-alias-brand-primary,#6d28d9);--dsr-up:var(--dsw-alias-state-error-primary,#e03131);--dsr-down:var(--dsw-alias-state-success-primary,#0ca678);--dsr-warn:var(--dsw-alias-state-warn-primary,#d97706);--dsr-blue:#3b82f6;--dsr-bg:var(--dsw-alias-bg-overlay,#ffffff);--dsr-bg1:var(--dsw-alias-bg-layer-1,#f7f8fa);--dsr-bg2:var(--dsw-alias-bg-layer-2,#e9ecf1);--dsr-line:var(--dsw-alias-border-l1,rgba(31,35,41,.1));--dsr-line2:var(--dsw-alias-border-l2,rgba(31,35,41,.18));--dsr-t1:var(--dsw-alias-label-primary,#1f2329);--dsr-t2:var(--dsw-alias-label-secondary,#576070);--dsr-mut:color-mix(in srgb,var(--dsr-t2) 72%,transparent)}
+.dsr-theme.dsr-dark{--dsr-pk:#a78bfa;--dsr-up:#f87171;--dsr-down:#34d399;--dsr-warn:#fbbf24;--dsr-blue:#60a5fa;--dsr-bg:#141824;--dsr-bg1:#1c2234;--dsr-bg2:#262e46;--dsr-line:rgba(148,163,184,.15);--dsr-line2:rgba(148,163,184,.28);--dsr-t1:#e9ecf5;--dsr-t2:#a9b3cc;--dsr-mut:color-mix(in srgb,var(--dsr-t2) 72%,transparent)}
+.dsr-ov{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(1180px,calc(100vw - 40px));max-height:calc(100vh - 48px);display:flex;flex-direction:column;border-radius:20px;background:radial-gradient(120% 90% at 100% 0%,color-mix(in srgb,var(--dsr-pk) 11%,transparent),transparent 55%),var(--dsr-bg);color:var(--dsr-t1);border:1px solid color-mix(in srgb,var(--dsr-pk) 32%,var(--dsr-line2));box-shadow:0 32px 90px rgba(0,0,0,.34),0 4px 18px rgba(0,0,0,.18);z-index:9999;font-family:system-ui,-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;overflow:hidden;pointer-events:auto;font-size:13px;line-height:1.55;font-variant-numeric:tabular-nums}
 .dsr-ov.dsr-full{top:0;left:0;transform:none;width:100vw;height:100vh;max-height:none;border-radius:0}
-.dsr-ov.dsr-dark{--dsr-pk:#a78bfa;--dsr-up:#f87171;--dsr-down:#34d399;--dsr-warn:#fbbf24;--dsr-blue:#60a5fa;--dsr-bg:#141824;--dsr-bg1:#1c2234;--dsr-bg2:#262e46;--dsr-line:rgba(148,163,184,.15);--dsr-line2:rgba(148,163,184,.28);--dsr-t1:#e9ecf5;--dsr-t2:#a9b3cc;--dsr-mut:color-mix(in srgb,var(--dsr-t2) 72%,transparent);background:radial-gradient(120% 90% at 100% 0%,rgba(139,92,246,.20),transparent 55%),linear-gradient(180deg,#171b29,#12141f);border-color:rgba(167,139,250,.30);box-shadow:0 34px 96px rgba(0,0,0,.55),0 4px 18px rgba(0,0,0,.35)}
-.dsr-ov.dsr-dark .dsr-stat{background:linear-gradient(180deg,rgba(139,92,246,.12),rgba(139,92,246,.02))}
-.dsr-ov.dsr-dark .dsr-conc-card{background:linear-gradient(180deg,rgba(139,92,246,.14),rgba(139,92,246,.02))}
-.dsr-ov.dsr-dark .dsr-ladder-h{background:linear-gradient(90deg,rgba(139,92,246,.16),transparent)}
-.dsr-ov.dsr-dark .dsr-head{background:linear-gradient(120deg,rgba(139,92,246,.16),transparent 62%)}
+.dsr-theme.dsr-dark .dsr-stat{background:linear-gradient(180deg,rgba(139,92,246,.12),rgba(139,92,246,.02))}
+.dsr-theme.dsr-dark .dsr-conc-card{background:linear-gradient(180deg,rgba(139,92,246,.14),rgba(139,92,246,.02))}
+.dsr-theme.dsr-dark .dsr-ladder-h{background:linear-gradient(90deg,rgba(139,92,246,.16),transparent)}
+.dsr-theme.dsr-dark .dsr-head{background:linear-gradient(120deg,rgba(139,92,246,.16),transparent 62%)}
 .dsr-fab{position:fixed;left:18px;bottom:18px;z-index:9990;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--dsr-pk),color-mix(in srgb,var(--dsr-pk) 70%,#000));color:#fff;border:none;border-radius:26px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 10px 30px rgba(0,0,0,.35);transition:all .18s;pointer-events:auto}
 .dsr-fab:hover{transform:translateY(-2px);box-shadow:0 14px 38px rgba(0,0,0,.42);filter:brightness(1.08)}
 .dsr-head{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--dsr-line);background:linear-gradient(120deg,color-mix(in srgb,var(--dsr-pk) 12%,transparent),transparent 62%)}
@@ -61,6 +58,8 @@ return {
 .dsr-btn{background:var(--dsr-bg2);border:1px solid var(--dsr-line2);color:var(--dsr-t1);border-radius:10px;padding:6px 14px;font-size:12.5px;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
 .dsr-btn:hover{border-color:var(--dsr-pk);color:var(--dsr-pk);background:color-mix(in srgb,var(--dsr-pk) 10%,transparent)}
 .dsr-btn:disabled{opacity:.5;cursor:default}
+.dsr-btn.primary{background:var(--dsr-pk);color:#fff;border-color:transparent;font-weight:600}
+.dsr-btn.primary:hover{filter:brightness(1.1);color:#fff}
 .dsr-btn.ghost{background:transparent;border-color:transparent}
 .dsr-toast{padding:7px 18px;font-size:12px;color:var(--dsr-down);background:color-mix(in srgb,var(--dsr-down) 12%,transparent);border-bottom:1px solid color-mix(in srgb,var(--dsr-down) 22%,transparent)}
 .dsr-error{padding:14px 18px;color:var(--dsr-up);background:color-mix(in srgb,var(--dsr-up) 10%,transparent);display:flex;align-items:center;gap:10px;font-size:13px;border-bottom:1px solid color-mix(in srgb,var(--dsr-up) 20%,transparent)}
@@ -209,7 +208,7 @@ return {
       return h('div', { style: { display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: height, padding: '0 6px', borderBottom: '1px solid var(--dsr-line)' } },
         items.map((it) => h('div', { key: it.label, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%', minWidth: 30 } },
           h('span', { style: { fontSize: 10, color: 'var(--dsr-t2)', marginBottom: 4 } }, String(it.value)),
-          h('div', { style: { width: 22, height: Math.max(3, Math.round((it.value / maxV) * (height - 36))), borderRadius: '5px 5px 0 0', background: 'linear-gradient(180deg,' + color + ',' + color + 'cc)' } }),
+          h('div', { style: { width: 22, height: Math.max(3, Math.round((it.value / maxV) * (height - 36))), borderRadius: '5px 5px 0 0', background: 'linear-gradient(180deg,' + color + ',color-mix(in srgb,' + color + ' 70%,transparent))' } }),
           h('span', { style: { fontSize: 10, color: 'var(--dsr-mut)', marginTop: 6 } }, it.label)
         ))
       )
@@ -408,9 +407,9 @@ return {
       }
       const stat = (label, val, color) => h('div', { key: label, className: 'dsr-stat' }, h('div', { className: 'dsr-stat-label' }, label), h('div', { className: 'dsr-stat-value', style: { color: color } }, val == null ? '—' : String(val)))
       const tabs = ['一字板', '连板天梯', '断板反包', '概念TOP3', '近7日']
-      return h('div', { className: 'dsr-ov' + (full ? ' dsr-full' : '') + (dark ? ' dsr-dark' : '') },
+      return h('div', { className: 'dsr-theme dsr-ov' + (full ? ' dsr-full' : '') + (dark ? ' dsr-dark' : '') },
         h('div', { className: 'dsr-head' },
-          h('div', { className: 'dsr-title' }, '📊 SK · 股市每日复盘', d ? h('span', { className: 'dsr-date' }, d.reviewDateMD + ' · ' + d.theme) : null),
+          h('div', { className: 'dsr-title' }, '📊 SK', d ? h('span', { className: 'dsr-date' }, d.reviewDateMD + ' · ' + d.theme) : null),
           h('div', { className: 'dsr-actions' },
             h('button', { className: 'dsr-btn', onClick: rev.refresh, disabled: rev.loading }, rev.loading ? '加载中…' : '🔄 刷新'),
             h('button', { className: 'dsr-btn', onClick: exportMd, disabled: mdState === '正在生成…' }, '📄 导出MD'),
@@ -439,6 +438,54 @@ return {
       )
     }
 
+    function SettingsPage() {
+      const rev = useReviewData()
+      const dark = useThemeDark()
+      const d = rev.data
+      const [mdMsg, setMdMsg] = React.useState(null)
+      const exportMd = () => {
+        setMdMsg('正在生成…')
+        host.call('review:markdown', {}).then((res) => {
+          setMdMsg(res && res.ok ? '已写入: ' + res.path : '失败: ' + ((res && res.error) || '未知'))
+        }).catch((e) => setMdMsg('失败: ' + String((e && e.message) || e)))
+      }
+      const row = (label, value) => h('div', { key: label, style: { display: 'flex', justifyContent: 'space-between', padding: '8px 14px', borderBottom: '1px solid var(--dsr-line)', fontSize: 12.5 } }, h('span', { style: { color: 'var(--dsr-t2)' } }, label), h('span', { style: { color: 'var(--dsr-t1)', fontWeight: 600 } }, value == null ? '—' : String(value)))
+      return h('div', { className: 'dsr-theme' + (dark ? ' dsr-dark' : ''), style: { padding: '18px 6px', display: 'flex', flexDirection: 'column', gap: 14, fontFamily: 'system-ui,"Microsoft YaHei",sans-serif' } },
+        h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' } },
+          h('span', { style: { fontSize: 19, fontWeight: 800, color: 'var(--dsr-t1)' } }, '📊 SK'),
+          d ? h('span', { className: 'dsr-date' }, d.reviewDateMD + ' · ' + d.theme) : null,
+          h('span', { style: { fontSize: 12, color: 'var(--dsr-t2)' } }, '股市每日复盘插件')
+        ),
+        rev.error ? h('div', { className: 'dsr-error' }, '数据加载失败: ' + rev.error) : null,
+        h('div', { className: 'dsr-stats', style: { gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))' } },
+          h('div', { className: 'dsr-stat' }, h('div', { className: 'dsr-stat-label' }, '涨停家数'), h('div', { className: 'dsr-stat-value', style: { color: 'var(--dsr-up)' } }, d ? d.totals.zt : '—')),
+          h('div', { className: 'dsr-stat' }, h('div', { className: 'dsr-stat-label' }, '一字板'), h('div', { className: 'dsr-stat-value', style: { color: 'var(--dsr-pk)' } }, d ? d.totals.oneWord : '—')),
+          h('div', { className: 'dsr-stat' }, h('div', { className: 'dsr-stat-label' }, '最高连板'), h('div', { className: 'dsr-stat-value', style: { color: 'var(--dsr-pk)' } }, d ? (d.totals.maxBoards || '—') : '—')),
+          h('div', { className: 'dsr-stat' }, h('div', { className: 'dsr-stat-label' }, '大盘成交额(亿)'), h('div', { className: 'dsr-stat-value', style: { color: 'var(--dsr-t1)', fontSize: 18 } }, d && d.last7.length ? d.last7[d.last7.length - 1].amountYI : '—'))
+        ),
+        h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+          h('button', { className: 'dsr-btn primary', onClick: () => setOpen(true) }, '📊 打开看板'),
+          h('button', { className: 'dsr-btn', onClick: rev.refresh, disabled: rev.loading }, rev.loading ? '加载中…' : '🔄 刷新数据'),
+          h('button', { className: 'dsr-btn', onClick: exportMd }, '📄 导出复盘MD')
+        ),
+        mdMsg ? h('div', { className: 'dsr-toast' }, mdMsg) : null,
+        h('div', { className: 'dsr-sec' },
+          h('div', { className: 'dsr-sec-h' }, h('span', { className: 'dot', style: { background: 'var(--dsr-pk)' } }), '运行状态'),
+          row('数据日期', d && d.reviewDateMD),
+          row('自动运行', d && d.meta && d.meta.nextRunAtText),
+          row('竞价封单采集', d && d.meta && d.meta.nextCaptureText),
+          row('竞价封单状态', d && d.meta && d.meta.auctionCaptured ? '已采集' : '待采集(交易日9:30)'),
+          row('本地文件', d && d.persistOk === false ? '⚠️写入受限(仅内存)' : '已持久化')
+        ),
+        h('div', { className: 'dsr-sec' },
+          h('div', { className: 'dsr-sec-h' }, h('span', { className: 'dot', style: { background: 'var(--dsr-blue)' } }), '数据源'),
+          row('涨停池/原因/封单', '同花顺'),
+          row('概念板块/跌停/成分股', '东方财富'),
+          row('指数与个股K线(备用)', '新浪 / 腾讯')
+        )
+      )
+    }
+
     function RunCard() {
       const rev = useReviewData()
       const d = rev.data
@@ -452,7 +499,7 @@ return {
     }
 
     function Fab() {
-      return h('button', { className: 'dsr-fab', onClick: () => setOpen(!store.open), title: 'SK 股市每日复盘' }, h('span', null, '📊'), h('span', null, 'SK 复盘'))
+      return h('button', { className: 'dsr-theme dsr-fab' + (useThemeDark() ? ' dsr-dark' : ''), onClick: () => setOpen(!store.open), title: 'SK 股市每日复盘' }, h('span', null, '📊'), h('span', null, 'SK'))
     }
 
     const slots = ctx.get('slots')
@@ -465,10 +512,13 @@ return {
       { name: 'shell.overlay', id: 'stock-review-dashboard', order: 5 },
       () => h(Dashboard, null)
     ))
+    slots.inject('settings.plugins.tab', () => slots.register(
+      { name: 'settings.plugins.tab', id: 'sk', order: 20, label: 'SK' },
+      () => h(SettingsPage, null)
+    ))
     slots.inject('tool.view.cordis', () => slots.register(
       { name: 'tool.view.cordis', key: 'self' },
       (props) => h(RunCard, props)
     ))
   }
-}
 }
