@@ -1,8 +1,3 @@
-// SK 股市每日复盘插件 - Host 端源码
-// DSH 动态 Cordis 插件(stkr-3/pkg-26), 通过 cordis_define 部署
-// 数据源: 同花顺/东方财富/新浪/腾讯公开接口
-
-module.exports = function hostFactory() {
 return {
   inject: ['timer'],
   apply(ctx) {
@@ -10,6 +5,7 @@ return {
     const BASE = 'D:/DSH/.stock-review'
     const SNAP_FILE = BASE + '/snapshot.json'
     const REVIEW_DIR = BASE + '/reviews'
+    const REPO_DIR = 'D:/DSH/sk-stock-review'
     const FS_POLICY = { mode: 'workspace-write', workspaceRoot: 'D:\\DSH' }
     const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36'
     const THS_FIELDS = '199112,10,9001,330323,133971,330324,9002,330329,133970,9003,330325,9004,330326,9005,330328,133969,9006,330327,9007,330330,9008,9009,9010,330331,9013,9014,9015,9016,9017,9018,330332,133972,330333,330336,9011,9012'
@@ -57,6 +53,38 @@ return {
       const s = text.replace(/^\uFEFF/, '').trim()
       if (!s || s[0] !== '{') throw new Error('非JSON响应: ' + snip(s, 80))
       return JSON.parse(s)
+    }
+    async function curlEx(url, method, body, headers) {
+      const sp = ctx.get('subprocess')
+      if (!sp) throw new Error('subprocess 服务不可用')
+      const argv = ['curl.exe', '-s', '-L', '--max-time', '30', '-X', method, '-A', UA]
+      for (const hd of headers) { argv.push('-H'); argv.push(hd) }
+      if (body != null) { argv.push('--data'); argv.push(body) }
+      argv.push(url)
+      const h = sp.spawn({ argv: argv, cwd: WORKSPACE, stdio: { stdin: 'ignore', stdout: { maxBytes: 3000000 }, stderr: { maxBytes: 30000 } }, graceMs: 40000 })
+      const done = await h.done
+      const so = h.collected && h.collected.stdout ? h.collected.stdout.readFrom(0).text : ''
+      if (done.exitCode !== 0) throw new Error('curl exit=' + done.exitCode + ' url=' + snip(url, 60))
+      const s = so.trim()
+      if (!s) return null
+      let j = null
+      try { j = JSON.parse(s) } catch (e) { throw new Error('非JSON响应: ' + snip(s, 120)) }
+      if (j && j.message && j.documentation_url) throw new Error('GitHub: ' + String(j.message).slice(0, 200))
+      return j
+    }
+    async function readRepoFile(rel) {
+      const fs = ctx.get('fs')
+      if (!fs) throw new Error('fs 不可用')
+      const t = await fs.resolve(REPO_DIR + '/' + rel)
+      return await fs.readText(t)
+    }
+    async function writeBodyFile(content) {
+      const fs = ctx.get('fs')
+      if (!fs) throw new Error('fs 不可用')
+      await ensureDirs()
+      const t = await fs.resolve(BASE + '/.gh-body.json')
+      await fs.writeText(t, content, undefined, undefined, FS_POLICY)
+      return '@' + BASE + '/.gh-body.json'
     }
     const parseEmKlines = (j) => {
       const ks = (j && j.data && j.data.klines) || []
@@ -316,8 +344,12 @@ return {
         const dow = now.getUTCDay()
         if (dow === 0 || dow === 6) return
         const today = shDate()
-        const pool = await thsPool(today, 200)
-        if (!pool.total || !pool.items.length) return
+        let pool = null
+        for (let attempt = 0; attempt < 3 && !pool; attempt++) {
+          try { pool = await thsPool(today, 200) } catch (e) {}
+          if (!pool) await sleep(5000)
+        }
+        if (!pool || !pool.total || !pool.items.length) return
         const seals = {}
         for (const it of pool.items) if (it.type === '一字板') seals[it.code] = it.seal
         if (!Object.keys(seals).length) return
@@ -664,6 +696,61 @@ return {
       }
     })
 
+    const ghTool = harness.defineTool({
+      name: 'stkr_github_publish',
+      description: 'SK插件一键部署到GitHub:使用Personal Access Token创建仓库并推送源码(无需git)。',
+      parameters: {
+        type: 'object',
+        properties: {
+          token: { type: 'string', description: 'GitHub Personal Access Token(需 repo 权限)' },
+          repo: { type: 'string', description: '仓库名,默认 sk-stock-review' },
+          private: { type: 'boolean', description: '私有仓库?默认 false' }
+        },
+        required: ['token']
+      },
+      output: {
+        schema: { type: 'object', additionalProperties: true },
+        render(args, value) { return [{ type: 'text', text: JSON.stringify(value, null, 2) }] }
+      },
+      async execute(args) {
+        const token = String((args && args.token) || '').trim()
+        const repo = String((args && args.repo) || 'sk-stock-review').trim()
+        const priv = !!(args && args.private)
+        if (!token) return { ok: false, error: '缺少 GitHub token' }
+        const owner = 'YB-Jn'
+        const api = 'https://api.github.com'
+        const hdr = ['Authorization: Bearer ' + token, 'Accept: application/vnd.github+json', 'X-GitHub-Api-Version: 2022-11-28']
+        try {
+          let created = false
+          try {
+            await curlEx(api + '/user/repos', 'POST', JSON.stringify({ name: repo, description: 'SK 股市每日复盘插件 (DSH dynamic Cordis plugin)', private: priv, auto_init: false }), hdr)
+            created = true
+          } catch (e) { /* 仓库可能已存在 */ }
+          const files = ['README.md', 'package.json', 'LICENSE', '.gitignore', 'src/host.js', 'src/client.js']
+          const results = []
+          for (const rel of files) {
+            try {
+              const content = await readRepoFile(rel)
+              let sha = null
+              try {
+                const meta = await curlEx(api + '/repos/' + owner + '/' + repo + '/contents/' + rel, 'GET', null, hdr)
+                if (meta && meta.sha) sha = meta.sha
+              } catch (e) { /* 文件不存在 */ }
+              const payload = { message: 'Add ' + rel, content: btoa(content) }
+              if (sha) payload.sha = sha
+              const bodyRef = await writeBodyFile(JSON.stringify(payload))
+              await curlEx(api + '/repos/' + owner + '/' + repo + '/contents/' + rel, 'PUT', bodyRef, hdr)
+              results.push(rel + ' ✓')
+            } catch (e) { results.push(rel + ' ✗ ' + String((e && e.message) || e).slice(0, 140)) }
+          }
+          return { ok: true, url: 'https://github.com/' + owner + '/' + repo, created, files: results }
+        } catch (e) {
+          return { ok: false, error: String((e && e.message) || e).slice(0, 400) }
+        }
+      }
+    })
+    harness.registerTool(ctx, ghTool)
+
     const dbgTool = harness.defineTool({
       name: 'stkr_debug',
       description: '股票复盘插件诊断:构建最新复盘并返回摘要、错误与耗时。',
@@ -704,5 +791,4 @@ return {
       }, 800)
     }).catch(() => {})
   }
-}
 }
