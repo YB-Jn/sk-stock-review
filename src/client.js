@@ -1,7 +1,7 @@
 return {
   inject: ['timer'],
   apply(ctx) {
-    const store = { open: false, subs: [] }
+    const store = { open: false, subs: [], minute: null, minSubs: [] }
     const setOpen = (v) => {
       store.open = !!v
       for (const f of store.subs.slice()) { try { f(store.open) } catch (e) {} }
@@ -11,6 +11,18 @@ return {
       React.useEffect(() => {
         store.subs.push(setV)
         return () => { const i = store.subs.indexOf(setV); if (i >= 0) store.subs.splice(i, 1) }
+      }, [])
+      return v
+    }
+    const setMinute = (code) => {
+      store.minute = code
+      for (const f of store.minSubs.slice()) { try { f(store.minute) } catch (e) {} }
+    }
+    const useMinute = () => {
+      const [v, setV] = React.useState(store.minute)
+      React.useEffect(() => {
+        store.minSubs.push(setV)
+        return () => { const i = store.minSubs.indexOf(setV); if (i >= 0) store.minSubs.splice(i, 1) }
       }, [])
       return v
     }
@@ -49,8 +61,6 @@ return {
 .dsr-theme.dsr-dark .dsr-conc-card{background:linear-gradient(180deg,rgba(139,92,246,.14),rgba(139,92,246,.02))}
 .dsr-theme.dsr-dark .dsr-ladder-h{background:linear-gradient(90deg,rgba(139,92,246,.16),transparent)}
 .dsr-theme.dsr-dark .dsr-head{background:linear-gradient(120deg,rgba(139,92,246,.16),transparent 62%)}
-.dsr-fab{position:fixed;left:18px;bottom:18px;z-index:9990;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--dsr-pk),color-mix(in srgb,var(--dsr-pk) 70%,#000));color:#fff;border:none;border-radius:26px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 10px 30px rgba(0,0,0,.35);transition:all .18s;pointer-events:auto}
-.dsr-fab:hover{transform:translateY(-2px);box-shadow:0 14px 38px rgba(0,0,0,.42);filter:brightness(1.08)}
 .dsr-head{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--dsr-line);background:linear-gradient(120deg,color-mix(in srgb,var(--dsr-pk) 12%,transparent),transparent 62%)}
 .dsr-title{font-size:16.5px;font-weight:800;letter-spacing:.3px;display:flex;align-items:center;gap:10px;color:var(--dsr-t1)}
 .dsr-date{font-size:12.5px;font-weight:700;color:var(--dsr-pk);background:color-mix(in srgb,var(--dsr-pk) 14%,transparent);padding:2.5px 12px;border-radius:20px;border:1px solid color-mix(in srgb,var(--dsr-pk) 26%,transparent)}
@@ -135,6 +145,21 @@ return {
 .dsr-runcard .c{font-size:12px;color:var(--dsw-alias-label-secondary,#576070)}
 .dsr-btn-mini{background:none;border:1px solid var(--dsw-alias-brand-primary,#6d28d9);color:var(--dsw-alias-brand-primary,#6d28d9);border-radius:8px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:inherit}
 .dsr-btn-mini:hover{background:color-mix(in srgb,var(--dsw-alias-brand-primary,#6d28d9) 10%,transparent)}
+.dsr-link{cursor:pointer;color:var(--dsr-pk);border-bottom:1px dashed color-mix(in srgb,var(--dsr-pk) 50%,transparent);transition:color .15s}
+.dsr-link:hover{color:var(--dsr-up);border-bottom-color:var(--dsr-up)}
+.dsr-mn-ov{position:fixed;inset:0;z-index:10010;display:flex;align-items:center;justify-content:center;background:rgba(8,10,18,.5);backdrop-filter:blur(3px);pointer-events:auto}
+.dsr-mn-card{width:min(720px,calc(100vw - 48px));max-height:calc(100vh - 60px);display:flex;flex-direction:column;border-radius:18px;background:var(--dsr-bg);color:var(--dsr-t1);border:1px solid color-mix(in srgb,var(--dsr-pk) 32%,var(--dsr-line2));box-shadow:0 28px 80px rgba(0,0,0,.4);overflow:hidden;font-family:system-ui,-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;font-size:13px;line-height:1.5;font-variant-numeric:tabular-nums}
+.dsr-mn-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--dsr-line);background:linear-gradient(120deg,color-mix(in srgb,var(--dsr-pk) 12%,transparent),transparent 62%)}
+.dsr-mn-name{font-size:16px;font-weight:800;color:var(--dsr-t1)}
+.dsr-mn-code{font-size:12px;color:var(--dsr-mut)}
+.dsr-mn-date{font-size:12px;color:var(--dsr-pk);background:color-mix(in srgb,var(--dsr-pk) 13%,transparent);padding:2px 11px;border-radius:20px;border:1px solid color-mix(in srgb,var(--dsr-pk) 24%,transparent)}
+.dsr-mn-body{flex:1;overflow-y:auto;padding:14px 16px 16px;scrollbar-width:thin;scrollbar-color:var(--dsr-line2) transparent}
+.dsr-mn-quote{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.dsr-mn-price{font-size:26px;font-weight:800}
+.dsr-mn-pct{font-size:14px;font-weight:700}
+.dsr-mn-legend{display:flex;gap:14px;font-size:11.5px;color:var(--dsr-t2);margin-top:8px;justify-content:center}
+.dsr-mn-legend .li{display:flex;align-items:center;gap:6px}
+.dsr-mn-legend .sw{width:18px;height:3px;border-radius:2px}
 `)
 
     const h = React.createElement
@@ -144,6 +169,121 @@ return {
     const typeBadge = (t) => t === '一字板' ? h('span', { className: 'dsr-badge bd-brand' }, '一字板') : t === 'T字板' ? h('span', { className: 'dsr-badge bd-amber' }, 'T字板') : t === '换手板' ? h('span', { className: 'dsr-badge bd-blue' }, '换手板') : null
     const volBadge = (v) => v === '放量晋级' ? h('span', { className: 'dsr-badge bd-up' }, '放量晋级') : v === '缩量晋级' ? h('span', { className: 'dsr-badge bd-blue' }, '缩量晋级') : v === '平量晋级' ? h('span', { className: 'dsr-badge bd-gray' }, '平量晋级') : null
     const sealBadge = (t) => t === '竞价' ? h('span', { className: 'dsr-badge bd-brand' }, '竞价封单') : h('span', { className: 'dsr-badge bd-gray' }, '收盘封单')
+
+    function StockName(props) {
+      return h('span', { className: 'dsr-name dsr-link', title: '查看当日分时图', onClick: (e) => { e.stopPropagation(); setMinute(props.code) } }, props.name)
+    }
+
+    function MinuteChart(props) {
+      const data = props.data
+      const points = (data && data.points) || []
+      if (!points.length) return h('div', { className: 'dsr-empty' }, '暂无分时数据')
+      const pre = Number(data.preClose) || 0
+      const width = 640, height = 340
+      const padL = 52, padR = 14, padT = 16, padB = 26
+      const volH = 64
+      const mainH = height - padT - padB - volH - 12
+      const iw = width - padL - padR
+      const n = points.length
+      let lo = pre, hi = pre
+      for (const p of points) { if (p.price < lo) lo = p.price; if (p.price > hi) hi = p.price }
+      const span = hi - lo
+      const pad = Math.max(span * 0.08, 0.02)
+      lo -= pad; hi += pad
+      const xAt = (i) => padL + (n <= 1 ? iw / 2 : iw * i / (n - 1))
+      const yAt = (v) => padT + mainH - ((v - lo) / (hi - lo)) * mainH
+      const yPre = yAt(pre)
+      let maxVol = 1
+      for (const p of points) maxVol = Math.max(maxVol, p.vol)
+      const last = points[n - 1]
+      const up = last.price >= pre
+      const lineColor = up ? 'var(--dsr-up)' : 'var(--dsr-down)'
+      const els = []
+      for (let g = 0; g <= 4; g++) {
+        const v = hi - (hi - lo) * g / 4
+        const y = yAt(v)
+        els.push(h('line', { key: 'g' + g, x1: padL, y1: y, x2: width - padR, y2: y, style: { stroke: 'var(--dsr-line)' }, strokeWidth: 1 }))
+        els.push(h('text', { key: 'gt' + g, x: padL - 6, y: y + 3, fontSize: 9.5, style: { fill: 'var(--dsr-mut)' }, textAnchor: 'end' }, v.toFixed(2)))
+      }
+      els.push(h('line', { key: 'pre', x1: padL, y1: yPre, x2: width - padR, y2: yPre, style: { stroke: 'var(--dsr-t2)' }, strokeWidth: 1, strokeDasharray: '5 4' }))
+      els.push(h('text', { key: 'pret', x: width - padR - 2, y: yPre - 4, fontSize: 9, style: { fill: 'var(--dsr-mut)' }, textAnchor: 'end' }, '昨收 ' + pre.toFixed(2)))
+      const priceD = points.map((p, i) => (i === 0 ? 'M' : 'L') + xAt(i).toFixed(1) + ',' + yAt(p.price).toFixed(1)).join(' ')
+      els.push(h('path', { key: 'pl', d: priceD, fill: 'none', style: { stroke: lineColor }, strokeWidth: 1.9, strokeLinejoin: 'round', strokeLinecap: 'round' }))
+      const avgPts = points.filter((p) => p.avg > 0)
+      if (avgPts.length > 1) {
+        const avgD = avgPts.map((p, i) => (i === 0 ? 'M' : 'L') + xAt(points.indexOf(p)).toFixed(1) + ',' + yAt(p.avg).toFixed(1)).join(' ')
+        els.push(h('path', { key: 'al', d: avgD, fill: 'none', style: { stroke: 'var(--dsr-warn)' }, strokeWidth: 1.5, strokeLinejoin: 'round', strokeLinecap: 'round', opacity: .95 }))
+      }
+      const volTop = padT + mainH + 8
+      els.push(h('line', { key: 'vd', x1: padL, y1: volTop, x2: width - padR, y2: volTop, style: { stroke: 'var(--dsr-line)' }, strokeWidth: 1 }))
+      const step = Math.max(1, Math.floor(n / 120))
+      for (let i = 0; i < n; i += step) {
+        const p = points[i]
+        const bh = Math.max(1, (p.vol / maxVol) * (height - padB - volTop - 2))
+        els.push(h('rect', { key: 'v' + i, x: xAt(i) - 1.6, y: height - padB - bh, width: 3.2, height: bh, style: { fill: p.price >= pre ? 'var(--dsr-up)' : 'var(--dsr-down)' }, opacity: .7 }))
+      }
+      const xLabels = []
+      if (n > 0) {
+        xLabels.push([0, points[0].t])
+        const mid = Math.floor(n / 2)
+        xLabels.push([mid, points[mid].t])
+        xLabels.push([n - 1, points[n - 1].t])
+      }
+      for (const [i, t] of xLabels) {
+        els.push(h('text', { key: 'x' + i, x: xAt(i), y: height - 8, fontSize: 10, style: { fill: 'var(--dsr-mut)' }, textAnchor: 'middle' }, t))
+      }
+      return h('svg', { width: '100%', viewBox: '0 0 ' + width + ' ' + height, preserveAspectRatio: 'xMidYMid meet', style: { display: 'block' } }, els)
+    }
+
+    function MinuteModal(props) {
+      const dark = useThemeDark()
+      const [state, setState] = React.useState({ loading: false, data: null, error: null })
+      React.useEffect(() => {
+        if (!props.code) return
+        let alive = true
+        setState({ loading: true, data: null, error: null })
+        host.call('stock:minute', { code: props.code }).then((res) => {
+          if (!alive) return
+          if (res && res.ok) setState({ loading: false, data: res.data, error: null })
+          else setState({ loading: false, data: null, error: (res && res.error) || '未知错误' })
+        }).catch((e) => { if (alive) setState({ loading: false, data: null, error: String((e && e.message) || e) }) })
+        return () => { alive = false }
+      }, [props.code])
+      const d = state.data
+      const last = d && d.points && d.points.length ? d.points[d.points.length - 1] : null
+      const pre = d ? (Number(d.preClose) || 0) : 0
+      const pct = pre > 0 && last ? ((last.price - pre) / pre) * 100 : null
+      const up = pct != null && pct >= 0
+      const title = (d && d.name) || props.name || props.code
+      return h('div', { className: 'dsr-theme dsr-mn-ov' + (dark ? ' dsr-dark' : ''), onClick: (e) => { if (e.target === e.currentTarget) props.onClose() } },
+        h('div', { className: 'dsr-mn-card' },
+          h('div', { className: 'dsr-mn-head' },
+            h('span', { className: 'dsr-mn-name' }, title),
+            h('span', { className: 'dsr-mn-code' }, props.code),
+            d ? h('span', { className: 'dsr-mn-date' }, d.date) : null,
+            h('button', { className: 'dsr-btn ghost', onClick: props.onClose, style: { marginLeft: 'auto' } }, '✕')
+          ),
+          state.error ? h('div', { className: 'dsr-error' }, '分时数据获取失败: ' + state.error) : null,
+          state.loading ? h('div', { className: 'dsr-loading' }, '正在拉取分时数据…') : null,
+          d ? h('div', { className: 'dsr-mn-body' },
+            h('div', { className: 'dsr-mn-quote' },
+              h('span', { className: 'dsr-mn-price', style: { color: up ? 'var(--dsr-up)' : 'var(--dsr-down)' } }, last ? last.price.toFixed(2) : '—'),
+              h('span', { className: 'dsr-mn-pct', style: { color: up ? 'var(--dsr-up)' : 'var(--dsr-down)' } }, pct == null ? '—' : (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%'),
+              h('span', { style: { color: 'var(--dsr-t2)', fontSize: 12 } }, '昨收 ' + (pre > 0 ? pre.toFixed(2) : '—')),
+              h('span', { style: { color: 'var(--dsr-t2)', fontSize: 12, marginLeft: 'auto' } }, '数据截至 ' + (last ? last.t : '—'))
+            ),
+            h(MinuteChart, { data: d }),
+            h('div', { className: 'dsr-mn-legend' },
+              h('span', { className: 'li' }, h('span', { className: 'sw', style: { background: up ? 'var(--dsr-up)' : 'var(--dsr-down)' } }), '分时'),
+              h('span', { className: 'li' }, h('span', { className: 'sw', style: { background: 'var(--dsr-warn)' } }), '均价'),
+              h('span', { className: 'li' }, h('span', { className: 'sw', style: { background: 'var(--dsr-t2)' } }), '昨收'),
+              h('span', { className: 'li' }, h('span', { className: 'sw', style: { background: 'var(--dsr-mut)' } }), '成交量(柱)')
+            ),
+            h('div', { style: { fontSize: 11, color: 'var(--dsr-mut)', marginTop: 8, textAlign: 'center' } }, '分时数据来自公开行情接口,仅供个人复盘参考')
+          ) : null
+        )
+      )
+    }
 
     function useReviewData() {
       const [tick, setTick] = React.useState(0)
@@ -247,7 +387,7 @@ return {
       const delta = it.prevSeal > 0 ? h('span', { className: 'dsr-delta' }, '昨日 ' + fmtSeal(it.prevSeal) + ' → ' + fmtSeal(it.seal)) : null
       const label = it.prevBoards > 0 && it.boards > it.prevBoards ? it.prevBoards + '进' + it.boards : (it.boards > 1 ? it.boards + '板' : null)
       return h('div', { className: 'dsr-row' },
-        h('span', { className: 'dsr-name' }, it.name),
+        h(StockName, { code: it.code, name: it.name }),
         h('span', { className: 'dsr-code' }, it.code),
         label ? h('span', { className: 'dsr-badge bd-brand' }, label) : null,
         h('span', { className: 'dsr-seal' }, fmtSeal(it.seal)),
@@ -287,7 +427,7 @@ return {
             return h('div', { key: it.code, className: 'dsr-stk' },
               h('div', { className: 'dsr-stk-main' },
                 h('div', { className: 'dsr-stk-top' },
-                  h('span', { className: 'dsr-name' }, it.name),
+                  h(StockName, { code: it.code, name: it.name }),
                   h('span', { className: 'dsr-code' }, it.code),
                   typeBadge(it.type),
                   volBadge(it.volLabel),
@@ -319,7 +459,7 @@ return {
           d.gapUp.map((it) => h('div', { key: it.code, className: 'dsr-stk' },
             h('div', { className: 'dsr-stk-main' },
               h('div', { className: 'dsr-stk-top' },
-                h('span', { className: 'dsr-name' }, it.name),
+                h(StockName, { code: it.code, name: it.name }),
                 h('span', { className: 'dsr-code' }, it.code),
                 typeBadge(it.type),
                 h('span', { className: 'dsr-badge bd-amber' }, it.highDays || '—'),
@@ -345,7 +485,7 @@ return {
           (c.top5 || []).length ? (c.top5 || []).map((s, i) =>
             h('div', { key: s.code, className: 'dsr-row' },
               h('span', { className: 'dsr-badge bd-gray' }, '#' + (i + 1)),
-              h('span', { className: 'dsr-name' }, s.name),
+              h(StockName, { code: s.code, name: s.name }),
               h('span', { className: 'dsr-code' }, s.code),
               h('span', { className: 'dsr-reason', style: { textAlign: 'right' } }, '成交 ' + fmtSeal(s.amount)),
               h('span', { style: { color: s.pct >= 0 ? 'var(--dsr-up)' : 'var(--dsr-down)', fontWeight: 700, whiteSpace: 'nowrap' } }, fmtPct(s.pct))
@@ -392,6 +532,7 @@ return {
 
     function Dashboard() {
       const open = useOpen()
+      const minute = useMinute()
       const rev = useReviewData()
       const dark = useThemeDark()
       const [tab, setTab] = React.useState(0)
@@ -407,7 +548,8 @@ return {
       }
       const stat = (label, val, color) => h('div', { key: label, className: 'dsr-stat' }, h('div', { className: 'dsr-stat-label' }, label), h('div', { className: 'dsr-stat-value', style: { color: color } }, val == null ? '—' : String(val)))
       const tabs = ['一字板', '连板天梯', '断板反包', '概念TOP3', '近7日']
-      return h('div', { className: 'dsr-theme dsr-ov' + (full ? ' dsr-full' : '') + (dark ? ' dsr-dark' : '') },
+      return h(React.Fragment, null,
+        h('div', { className: 'dsr-theme dsr-ov' + (full ? ' dsr-full' : '') + (dark ? ' dsr-dark' : '') },
         h('div', { className: 'dsr-head' },
           h('div', { className: 'dsr-title' }, '📊 SK', d ? h('span', { className: 'dsr-date' }, d.reviewDateMD + ' · ' + d.theme) : null),
           h('div', { className: 'dsr-actions' },
@@ -435,6 +577,8 @@ return {
             '数据日期 ' + d.reviewDateMD + ' · 自动运行 ' + (d.meta && d.meta.nextRunAtText) + ' · 竞价采集 ' + (d.meta && d.meta.nextCaptureText) + ' · ' + (d.meta && d.meta.source) + (d.persistOk === false ? ' · ⚠️本地文件写入受限(仅内存)' : '')
           )
         ) : null
+        ),
+        minute ? h(MinuteModal, { code: minute, onClose: () => setMinute(null) }) : null
       )
     }
 
@@ -498,16 +642,8 @@ return {
       )
     }
 
-    function Fab() {
-      return h('button', { className: 'dsr-theme dsr-fab' + (useThemeDark() ? ' dsr-dark' : ''), onClick: () => setOpen(!store.open), title: 'SK 股市每日复盘' }, h('span', null, '📊'), h('span', null, 'SK'))
-    }
-
     const slots = ctx.get('slots')
     if (!slots) return
-    slots.inject('shell.overlay', () => slots.register(
-      { name: 'shell.overlay', id: 'stock-review-fab', order: 2 },
-      () => h(Fab, null)
-    ))
     slots.inject('shell.overlay', () => slots.register(
       { name: 'shell.overlay', id: 'stock-review-dashboard', order: 5 },
       () => h(Dashboard, null)
