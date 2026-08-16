@@ -1,0 +1,24 @@
+{
+  "name": "sk-stock-review",
+  "version": "1.0.0",
+  "description": "SK 股市每日复盘插件 —— 基于 DeepSeek Harness (DSH) 的动态 Cordis 插件:每日 7:00 自动拉取 A 股涨停/一字板/连板/概念板块/大盘量能数据,按个人复盘风格生成复盘报告与可视化看板。",
+  "license": "MIT",
+  "author": "YB-Jn",
+  "keywords": [
+    "dsh",
+    "cordis",
+    "plugin",
+    "a-share",
+    "stock-review",
+    "limit-up",
+    "复盘"
+  ],
+  "main": "src/host.js",
+  "files": [
+    "src"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YB-Jn/sk-stock-review.git"
+  }
+}
