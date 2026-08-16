@@ -253,6 +253,105 @@ return {
       const diff = (j && j.data && j.data.diff) || []
       return diff.slice(0, n || 5).map((b) => ({ code: String(b.f12 || ''), name: String(b.f14 || ''), pct: toNum(b.f3), amount: toNum(b.f6) }))
     }
+    const hmOf = (t) => {
+      const s = String(t || '')
+      const m = s.match(/(\d{2}):(\d{2})/)
+      if (m) return m[1] + ':' + m[2]
+      if (s.length >= 4 && /^\d{4}$/.test(s)) return s.slice(0, 2) + ':' + s.slice(2, 4)
+      return s
+    }
+    const hmMin = (hm) => { const p = String(hm).split(':'); return (+p[0] || 0) * 60 + (+p[1] || 0) }
+    async function emMinute(code) {
+      const c = String(code)
+      const secid = (/^[69]/.test(c) ? '1.' : '0.') + c
+      const q = 'secid=' + secid + '&fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58&ndays=1&iscr=0'
+      const j = await fetchJson('https://push2.eastmoney.com/api/qt/stock/trends2/get?' + q)
+      const d = j && j.data
+      const trends = (d && d.trends) || []
+      const out = []
+      let lo = Infinity, hi = -Infinity
+      for (const raw of trends) {
+        const cells = Array.isArray(raw) ? raw : String(raw).split(',')
+        if (cells.length < 8) continue
+        const price = toNum(cells[1])
+        if (price <= 0) continue
+        const hm = hmOf(cells[0])
+        const mins = hmMin(hm)
+        if (mins > 900) continue
+        const vol = toNum(cells[5])
+        const avg = toNum(cells[7])
+        out.push({ t: hm, price, avg, vol })
+        if (price < lo) lo = price
+        if (price > hi) hi = price
+      }
+      if (!out.length) throw new Error('EM分时为空')
+      let pre = toNum(d.preClose)
+      if (!(pre > 0)) pre = toNum(d.prePrice)
+      if (!(pre > 0)) pre = toNum(d.yclose)
+      const name = String((d && (d.name || d.f14)) || '')
+      return { name, date: String(d.date || ''), preClose: pre, points: out, min: lo === Infinity ? 0 : lo, max: hi === -Infinity ? 0 : hi }
+    }
+    async function tencentMinute(code) {
+      const c = String(code)
+      const sym = (/^6/.test(c) ? 'sh' : /^[034]/.test(c) ? 'sz' : 'bj') + c
+      const j = await fetchJson('https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=' + sym)
+      const d = j && j.data && j.data[sym] && j.data[sym].data
+      const rows = (d && d.data) || []
+      const out = []
+      let prevCumVol = 0
+      for (const r of rows) {
+        const p = String(r).split(' ')
+        if (p.length < 4) continue
+        const price = toNum(p[1])
+        if (price <= 0) continue
+        const hm = hmOf(p[0])
+        const mins = hmMin(hm)
+        if (mins > 900) continue
+        const avg = toNum(p[2])
+        const cumVol = toNum(p[3])
+        const vol = cumVol >= prevCumVol ? cumVol - prevCumVol : cumVol
+        prevCumVol = cumVol
+        out.push({ t: hm, price, avg, vol })
+      }
+      if (!out.length) throw new Error('腾讯分时为空')
+      const qt = (d && d.qt) || {}
+      let pre = toNum(qt.preClose || qt[4])
+      if (!(pre > 0)) pre = toNum(qt[4])
+      return { name: String(qt.name || qt[1] || ''), date: String(d.date || ''), preClose: pre, points: out, min: 0, max: 0 }
+    }
+    async function enrichMeta(data, code) {
+      if (!data.name || !(data.preClose > 0)) {
+        try {
+          const q = await sinaStockQuote(sinaSym(code))
+          if (!data.name && q.name) data.name = q.name
+          if (!(data.preClose > 0) && q.preClose > 0) data.preClose = q.preClose
+        } catch (e) {}
+      }
+      return data
+    }
+    async function fetchMinute(code) {
+      let lastErr = null
+      let em = null
+      let emErr = null
+      try { em = await emMinute(code) } catch (e) { emErr = String((e && e.message) || e); lastErr = e }
+      if (em && em.points.length) {
+        em = await enrichMeta(em, code)
+        em.src = 'em'
+        em.diag = emErr
+        return em
+      }
+      let tx = null
+      let txErr = null
+      try { tx = await tencentMinute(code) } catch (e) { txErr = String((e && e.message) || e); lastErr = e }
+      if (tx && tx.points.length) {
+        tx = await enrichMeta(tx, code)
+        tx.src = 'tx'
+        tx.diag = txErr
+        tx.emErr = emErr
+        return tx
+      }
+      throw lastErr || new Error('分时数据获取失败')
+    }
 
     async function resolveDates(klines) {
       const now = shNow()
@@ -695,6 +794,16 @@ return {
         return { ok: false, path: null, error: String((e && e.message) || e).slice(0, 300) }
       }
     })
+    harness.handle('stock:minute', async (args) => {
+      try {
+        const code = String((args && args.code) || '').trim()
+        if (!code) return { ok: false, error: '缺少股票代码' }
+        const data = await fetchMinute(code)
+        return { ok: true, data, error: null }
+      } catch (e) {
+        return { ok: false, data: null, error: String((e && e.message) || e).slice(0, 300) }
+      }
+    })
 
     const ghTool = harness.defineTool({
       name: 'stkr_github_publish',
@@ -782,6 +891,41 @@ return {
       }
     })
     harness.registerTool(ctx, dbgTool)
+
+    const minTool = harness.defineTool({
+      name: 'stkr_minute',
+      description: 'SK分时数据诊断:抓取指定股票当日分时并返回样本与解析结果。',
+      parameters: {
+        type: 'object',
+        properties: {
+          code: { type: 'string', description: '6位股票代码,如 600000' }
+        },
+        required: ['code']
+      },
+      output: {
+        schema: { type: 'object', additionalProperties: true },
+        render(args, value) { return [{ type: 'text', text: JSON.stringify(value, null, 2) }] }
+      },
+      async execute(args) {
+        const code = String((args && args.code) || '').trim()
+        if (!code) return { ok: false, error: '缺少股票代码' }
+        try {
+          const t0 = Date.now()
+          const data = await fetchMinute(code)
+          return {
+            ok: true, ms: Date.now() - t0, code,
+            src: san(data.src), name: san(data.name), date: san(data.date), preClose: san(data.preClose),
+            count: data.points.length,
+            first: data.points[0] || null,
+            last: data.points[data.points.length - 1] || null,
+            sample: data.points.slice(0, 3)
+          }
+        } catch (e) {
+          return { ok: false, error: String((e && e.message) || e) }
+        }
+      }
+    })
+    harness.registerTool(ctx, minTool)
 
     loadSnapshot().then(() => {
       scheduleNext()
